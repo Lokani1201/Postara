@@ -1,0 +1,47 @@
+export default async function handler(request) {
+  try {
+    const { prompt } = await request.json();
+
+    const systemMessage = `
+You are a social media expert for creators. 
+Create 5 short, engaging captions for a video post.
+Use emojis, hashtags, and different tones (funny, serious, motivational).
+Each caption should be 1–2 sentences.
+Separate them with "---"
+`;
+
+    const response = await fetch('https://api.openai.com/v1/chat/completions', {
+      method: 'POST',
+      headers: {
+        'Authorization': `Bearer ${process.env.OPENAI_API_KEY}`,
+        'Content-Type': 'application/json',
+      },
+      body: JSON.stringify({
+        model: 'gpt-3.5-turbo',
+        messages: [
+          { role: 'system', content: systemMessage },
+          { role: 'user', content: prompt }
+        ],
+        temperature: 0.9,
+        max_tokens: 200
+      })
+    });
+
+    const data = await response.json();
+    const captions = data.choices[0].message.content;
+
+    return new Response(JSON.stringify({ captions }), {
+      status: 200,
+      headers: { 'Content-Type': 'application/json' }
+    });
+  } catch (error) {
+    return new Response(JSON.stringify({ error: error.message }), {
+      status: 500,
+      headers: { 'Content-Type': 'application/json' }
+    });
+  }
+}
+
+export const config = {
+  runtime: 'edge',
+};
