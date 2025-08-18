@@ -1,5 +1,4 @@
 // === CONFIGURATION ===
-// Replace with your Ayrshare API Key (⚠️ for production, move this to backend!)
 const AYRSHARE_API_KEY = '57EE17FA-3ADC4081-903F57CB-65F688CA';
 
 // DOM Elements
@@ -15,27 +14,17 @@ const captionOutput = document.getElementById('caption-output');
 const captionInput = document.getElementById('caption-input');
 const postBtn = document.getElementById('post-btn');
 
-// State
 let selectedFile = null;
 let aiCaptions = [];
 
 // === EVENT LISTENERS ===
-// Upload Area Click
 uploadArea.addEventListener('click', () => fileInput.click());
-
-// File Selected
 fileInput.addEventListener('change', handleFileSelect);
-
-// Drag & Drop
 uploadArea.addEventListener('dragover', (e) => {
   e.preventDefault();
   uploadArea.classList.add('dragover');
 });
-
-uploadArea.addEventListener('dragleave', () => {
-  uploadArea.classList.remove('dragover');
-});
-
+uploadArea.addEventListener('dragleave', () => uploadArea.classList.remove('dragover'));
 uploadArea.addEventListener('drop', (e) => {
   e.preventDefault();
   uploadArea.classList.remove('dragover');
@@ -44,11 +33,7 @@ uploadArea.addEventListener('drop', (e) => {
     handleFileSelect({ target: fileInput });
   }
 });
-
-// AI Caption Button
 aiCaptionBtn.addEventListener('click', generateAICaptions);
-
-// Upload & Post Button
 postBtn.addEventListener('click', uploadAndPost);
 
 // === FUNCTIONS ===
@@ -56,29 +41,20 @@ function handleFileSelect(e) {
   const file = e.target.files[0];
   if (!file) return;
 
-  // Validate file type and size
   const validTypes = ['image/jpeg', 'image/png', 'video/mp4'];
   const maxSize = 10 * 1024 * 1024; // 10MB
 
-  if (!validTypes.includes(file.type)) {
-    alert('Only images (JPG, PNG) and videos (MP4) are supported.');
-    return;
-  }
-
-  if (file.size > maxSize) {
-    alert('File is too large. Maximum size is 10MB.');
-    return;
-  }
+  if (!validTypes.includes(file.type)) return alert('Only JPG, PNG, MP4 supported.');
+  if (file.size > maxSize) return alert('Max file size 10MB.');
 
   selectedFile = file;
   fileName.textContent = file.name;
   fileSize.textContent = formatFileSize(file.size);
 
-  // Preview
   if (file.type.startsWith('image/')) {
-    mediaPreview.innerHTML = `<img src="${URL.createObjectURL(file)}" alt="Preview" style="max-height: 200px;">`;
-  } else if (file.type.startsWith('video/')) {
-    mediaPreview.innerHTML = `<video controls style="max-height: 200px;"><source src="${URL.createObjectURL(file)}" type="${file.type}">Your browser does not support the video tag.</video>`;
+    mediaPreview.innerHTML = `<img src="${URL.createObjectURL(file)}" alt="Preview" style="max-height:200px;">`;
+  } else {
+    mediaPreview.innerHTML = `<video controls style="max-height:200px;"><source src="${URL.createObjectURL(file)}" type="${file.type}"></video>`;
   }
 }
 
@@ -87,92 +63,70 @@ function formatFileSize(bytes) {
   const k = 1024;
   const sizes = ['Bytes', 'KB', 'MB', 'GB'];
   const i = Math.floor(Math.log(bytes) / Math.log(k));
-  return parseFloat((bytes / Math.pow(k, i)).toFixed(2)) + ' ' + sizes[i];
+  return (bytes / Math.pow(k, i)).toFixed(2) + ' ' + sizes[i];
 }
 
 async function generateAICaptions() {
-  if (!selectedFile) {
-    alert('Please upload a media file first.');
-    return;
-  }
-
+  if (!selectedFile) return alert('Upload a media file first.');
   aiCaptionBtn.disabled = true;
-  aiCaptionBtn.innerHTML = 'Generating...';
+  aiCaptionBtn.textContent = 'Generating...';
 
   try {
-    const prompt = `Generate 5 short, engaging captions for a ${selectedFile.type.startsWith('image') ? 'photo' : 'video'} post. Use emojis, hashtags, and different tones (funny, serious, motivational). Each caption should be 1–2 sentences. Separate them with "---"`;
-
-    const response = await fetch('/api/generate-caption', {
+    const prompt = `Generate 5 short captions for a ${selectedFile.type.startsWith('image') ? 'photo' : 'video'}. Use emojis, hashtags, different tones. Separate with "---"`;
+    const res = await fetch('/api/generate-caption', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({ prompt })
     });
 
-    const data = await response.json();
-    if (data.error) throw new Error(data.error);
+    const data = await res.json();
+    if (!data.captions) throw new Error('No captions returned');
 
     aiCaptions = data.captions.split('---').map(c => c.trim()).filter(c => c);
-    captionOutput.innerHTML = aiCaptions
-      .map((caption, i) => `<div class="caption-item"><p>${caption}</p><button type="button" onclick="useCaption(${i})">Use</button></div>`)
-      .join('');
-  } catch (error) {
-    console.error('AI Error:', error);
-    alert('Failed to generate captions. Try again.');
+    captionOutput.innerHTML = aiCaptions.map((c,i) => `<div class="caption-item"><p>${c}</p><button type="button" onclick="useCaption(${i})">Use</button></div>`).join('');
+  } catch (err) {
+    console.error(err);
+    alert('Failed to generate captions.');
   } finally {
     aiCaptionBtn.disabled = false;
-    aiCaptionBtn.innerHTML = '✨ Generate 5 Captions';
+    aiCaptionBtn.textContent = '✨ Generate 5 Captions';
   }
 }
 
-function useCaption(index) {
-  captionInput.value = aiCaptions[index];
+function useCaption(i) {
+  captionInput.value = aiCaptions[i];
 }
 
 async function uploadAndPost() {
-  if (!selectedFile) {
-    alert('Please upload a media file first.');
-    return;
-  }
-
-  const selectedPlatforms = Array.from(platformCheckboxes)
-    .filter(cb => cb.checked)
-    .map(cb => cb.value);
-
-  if (selectedPlatforms.length === 0) {
-    alert('Please select at least one platform.');
-    return;
-  }
+  if (!selectedFile) return alert('Upload a media file first.');
+  const selectedPlatforms = Array.from(platformCheckboxes).filter(cb=>cb.checked).map(cb=>cb.value);
+  if (selectedPlatforms.length === 0) return alert('Select at least one platform.');
 
   postBtn.disabled = true;
-  postBtn.innerHTML = 'Uploading...';
+  postBtn.textContent = 'Uploading...';
 
   try {
-    // Step 1: Upload to Ayrshare
     const formData = new FormData();
     formData.append('media', selectedFile);
     formData.append('platforms', JSON.stringify(selectedPlatforms));
     formData.append('post', captionInput.value || 'Check out this post!');
 
-    const response = await fetch('https://api.ayrshare.com/upload', {
+    const res = await fetch('https://api.ayrshare.com/upload', {
       method: 'POST',
-      headers: {
-        'Authorization': `Bearer ${AYRSHARE_API_KEY}`
-      },
+      headers: { 'Authorization': `Bearer ${AYRSHARE_API_KEY}` },
       body: formData
     });
 
-    const result = await response.json();
+    const result = await res.json();
 
-    if (result.status === 'error') {
-      throw new Error(result.message);
-    }
+    if (result.status === 'error') throw new Error(result.message || 'Upload failed');
 
     alert(`✅ Posted successfully to ${selectedPlatforms.join(', ')}!`);
-  } catch (error) {
-    console.error('Post Error:', error);
-    alert('❌ Failed to post. Check console for details.');
+  } catch (err) {
+    console.error(err);
+    alert('❌ Upload failed. See console.');
   } finally {
     postBtn.disabled = false;
-    postBtn.innerHTML = 'Upload & Post';
+    postBtn.textContent = 'Upload & Post';
   }
 }
