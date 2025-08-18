@@ -1,48 +1,43 @@
-// api/upload.js
 import fetch from "node-fetch";
-import formidable from "formidable";
+import formidable from "formidable-serverless";
 
 export const config = {
   api: {
-    bodyParser: false, // important for file uploads
+    bodyParser: false,
   },
 };
 
 export default async function handler(req, res) {
-  if (req.method !== "POST") return res.status(405).json({ error: "Method not allowed" });
+  if (req.method !== "POST") return res.status(405).json({ message: "Only POST allowed" });
 
   const form = new formidable.IncomingForm();
-
   form.parse(req, async (err, fields, files) => {
-    if (err) return res.status(500).json({ error: "File parse failed" });
+    if (err) return res.status(500).json({ message: err.message });
 
-    const { post, platforms } = fields;
-    const mediaFile = files.media;
+    const file = files.file;
+    const caption = fields.caption || "";
 
-    if (!mediaFile) return res.status(400).json({ error: "No media uploaded" });
+    if (!file) return res.status(400).json({ message: "No file uploaded" });
 
     try {
+      // Upload to Ayrshare
       const formData = new FormData();
-      formData.append("media", mediaFile.filepath ? fs.createReadStream(mediaFile.filepath) : mediaFile);
-      formData.append("post", post || "Check this out!");
-      formData.append("platforms", platforms);
+      formData.append("media", file.filepath ? fs.createReadStream(file.filepath) : file);
+      formData.append("caption", caption);
 
-      const response = await fetch("https://api.ayrshare.com/upload", {
+      const response = await fetch("https://app.ayrshare.com/api/post", {
         method: "POST",
         headers: {
-          Authorization: `Bearer ${process.env.AYRSHARE_API_KEY}`,
+          "Authorization": `Bearer ${process.env.AYRSHARE_API_KEY}`,
         },
         body: formData,
       });
 
-      const result = await response.json();
-
-      if (result.status === "error") throw new Error(result.message);
-
-      res.status(200).json({ result });
-    } catch (error) {
-      console.error(error);
-      res.status(500).json({ error: "Upload failed." });
+      const data = await response.json();
+      res.status(200).json({ success: true, data });
+    } catch (e) {
+      console.error(e);
+      res.status(500).json({ success: false, message: e.message });
     }
   });
 }
