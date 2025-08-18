@@ -1,47 +1,27 @@
-export default async function handler(request) {
+// api/generate-caption.js
+import OpenAI from "openai";
+
+const openai = new OpenAI({
+  apiKey: process.env.OPENAI_API_KEY, // ⚠️ put your key in Vercel Environment Variables
+});
+
+export default async function handler(req, res) {
+  if (req.method !== "POST") return res.status(405).json({ error: "Method not allowed" });
+
   try {
-    const { prompt } = await request.json();
+    const { prompt } = req.body;
+    if (!prompt) return res.status(400).json({ error: "Missing prompt" });
 
-    const systemMessage = `
-You are a social media expert for creators. 
-Create 5 short, engaging captions for a video post.
-Use emojis, hashtags, and different tones (funny, serious, motivational).
-Each caption should be 1–2 sentences.
-Separate them with "---"
-`;
-
-    const response = await fetch('https://api.openai.com/v1/chat/completions', {
-      method: 'POST',
-      headers: {
-        'Authorization': `Bearer ${process.env.OPENAI_API_KEY}`,
-        'Content-Type': 'application/json',
-      },
-      body: JSON.stringify({
-        model: 'gpt-3.5-turbo',
-        messages: [
-          { role: 'system', content: systemMessage },
-          { role: 'user', content: prompt }
-        ],
-        temperature: 0.9,
-        max_tokens: 200
-      })
+    const completion = await openai.chat.completions.create({
+      model: "gpt-4o-mini",
+      messages: [{ role: "user", content: prompt }],
+      max_tokens: 250,
     });
 
-    const data = await response.json();
-    const captions = data.choices[0].message.content;
-
-    return new Response(JSON.stringify({ captions }), {
-      status: 200,
-      headers: { 'Content-Type': 'application/json' }
-    });
+    const captions = completion.choices[0].message.content;
+    res.status(200).json({ captions });
   } catch (error) {
-    return new Response(JSON.stringify({ error: error.message }), {
-      status: 500,
-      headers: { 'Content-Type': 'application/json' }
-    });
+    console.error(error);
+    res.status(500).json({ error: "AI Caption generation failed." });
   }
 }
-
-export const config = {
-  runtime: 'edge',
-};
