@@ -1,5 +1,5 @@
 // === CONFIGURATION ===
-// Replace with your Ayrshare API Key
+// Replace with your Ayrshare API Key (⚠️ for production, move this to backend!)
 const AYRSHARE_API_KEY = '57EE17FA-3ADC4081-903F57CB-65F688CA';
 
 // DOM Elements
@@ -167,10 +167,10 @@ async function uploadAndPost() {
       throw new Error(result.message);
     }
 
-    alert(`Posted successfully to ${selectedPlatforms.join(', ')}!`);
+    alert(`✅ Posted successfully to ${selectedPlatforms.join(', ')}!`);
   } catch (error) {
     console.error('Post Error:', error);
-    alert('Failed to post. Check console for details.');
+    alert('❌ Failed to post. Check console for details.');
   } finally {
     postBtn.disabled = false;
     postBtn.innerHTML = 'Upload & Post';
