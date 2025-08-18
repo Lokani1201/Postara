@@ -1,7 +1,4 @@
-// === CONFIGURATION ===
-const AYRSHARE_API_KEY = '57EE17FA-3ADC4081-903F57CB-65F688CA';
-
-// DOM Elements
+// === DOM Elements ===
 const uploadArea = document.getElementById('upload-area');
 const fileInput = document.getElementById('file-input');
 const fileName = document.getElementById('file-name');
@@ -14,17 +11,27 @@ const captionOutput = document.getElementById('caption-output');
 const captionInput = document.getElementById('caption-input');
 const postBtn = document.getElementById('post-btn');
 
+// === State ===
 let selectedFile = null;
 let aiCaptions = [];
 
-// === EVENT LISTENERS ===
+// === Event Listeners ===
+// Click upload area
 uploadArea.addEventListener('click', () => fileInput.click());
+
+// File selected
 fileInput.addEventListener('change', handleFileSelect);
+
+// Drag & drop
 uploadArea.addEventListener('dragover', (e) => {
   e.preventDefault();
   uploadArea.classList.add('dragover');
 });
-uploadArea.addEventListener('dragleave', () => uploadArea.classList.remove('dragover'));
+
+uploadArea.addEventListener('dragleave', () => {
+  uploadArea.classList.remove('dragover');
+});
+
 uploadArea.addEventListener('drop', (e) => {
   e.preventDefault();
   uploadArea.classList.remove('dragover');
@@ -33,10 +40,14 @@ uploadArea.addEventListener('drop', (e) => {
     handleFileSelect({ target: fileInput });
   }
 });
+
+// AI Caption button
 aiCaptionBtn.addEventListener('click', generateAICaptions);
+
+// Upload & Post button
 postBtn.addEventListener('click', uploadAndPost);
 
-// === FUNCTIONS ===
+// === Functions ===
 function handleFileSelect(e) {
   const file = e.target.files[0];
   if (!file) return;
@@ -44,15 +55,23 @@ function handleFileSelect(e) {
   const validTypes = ['image/jpeg', 'image/png', 'video/mp4'];
   const maxSize = 10 * 1024 * 1024; // 10MB
 
-  if (!validTypes.includes(file.type)) return alert('Only JPG, PNG, MP4 supported.');
-  if (file.size > maxSize) return alert('Max file size 10MB.');
+  if (!validTypes.includes(file.type)) {
+    alert('Only JPG, PNG, MP4 supported.');
+    return;
+  }
+
+  if (file.size > maxSize) {
+    alert('File too large (max 10MB).');
+    return;
+  }
 
   selectedFile = file;
   fileName.textContent = file.name;
   fileSize.textContent = formatFileSize(file.size);
 
+  // Preview
   if (file.type.startsWith('image/')) {
-    mediaPreview.innerHTML = `<img src="${URL.createObjectURL(file)}" alt="Preview" style="max-height:200px;">`;
+    mediaPreview.innerHTML = `<img src="${URL.createObjectURL(file)}" style="max-height:200px;">`;
   } else {
     mediaPreview.innerHTML = `<video controls style="max-height:200px;"><source src="${URL.createObjectURL(file)}" type="${file.type}"></video>`;
   }
@@ -66,24 +85,29 @@ function formatFileSize(bytes) {
   return (bytes / Math.pow(k, i)).toFixed(2) + ' ' + sizes[i];
 }
 
+// Generate AI captions
 async function generateAICaptions() {
-  if (!selectedFile) return alert('Upload a media file first.');
+  if (!selectedFile) return alert('Upload a file first.');
+  
   aiCaptionBtn.disabled = true;
   aiCaptionBtn.textContent = 'Generating...';
 
   try {
-    const prompt = `Generate 5 short captions for a ${selectedFile.type.startsWith('image') ? 'photo' : 'video'}. Use emojis, hashtags, different tones. Separate with "---"`;
+    const formData = new FormData();
+    formData.append('type', selectedFile.type.startsWith('image') ? 'image' : 'video');
+
     const res = await fetch('/api/generate-caption', {
       method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ prompt })
+      body: formData
     });
 
     const data = await res.json();
-    if (!data.captions) throw new Error('No captions returned');
+    if (data.error) throw new Error(data.error);
 
     aiCaptions = data.captions.split('---').map(c => c.trim()).filter(c => c);
-    captionOutput.innerHTML = aiCaptions.map((c,i) => `<div class="caption-item"><p>${c}</p><button type="button" onclick="useCaption(${i})">Use</button></div>`).join('');
+    captionOutput.innerHTML = aiCaptions.map((c, i) => 
+      `<div><p>${c}</p><button type="button" onclick="useCaption(${i})">Use</button></div>`
+    ).join('');
   } catch (err) {
     console.error(err);
     alert('Failed to generate captions.');
@@ -93,14 +117,19 @@ async function generateAICaptions() {
   }
 }
 
-function useCaption(i) {
-  captionInput.value = aiCaptions[i];
+function useCaption(index) {
+  captionInput.value = aiCaptions[index];
 }
 
+// Upload & post
 async function uploadAndPost() {
-  if (!selectedFile) return alert('Upload a media file first.');
-  const selectedPlatforms = Array.from(platformCheckboxes).filter(cb=>cb.checked).map(cb=>cb.value);
-  if (selectedPlatforms.length === 0) return alert('Select at least one platform.');
+  if (!selectedFile) return alert('Upload a file first.');
+
+  const selectedPlatforms = Array.from(platformCheckboxes)
+    .filter(cb => cb.checked)
+    .map(cb => cb.value);
+
+  if (!selectedPlatforms.length) return alert('Select at least one platform.');
 
   postBtn.disabled = true;
   postBtn.textContent = 'Uploading...';
@@ -109,25 +138,22 @@ async function uploadAndPost() {
     const formData = new FormData();
     formData.append('media', selectedFile);
     formData.append('platforms', JSON.stringify(selectedPlatforms));
-    formData.append('post', captionInput.value || 'Check out this post!');
+    formData.append('caption', captionInput.value || 'Check this out!');
 
-    const res = await fetch('https://api.ayrshare.com/upload', {
+    const res = await fetch('/api/upload', {
       method: 'POST',
-      headers: { 'Authorization': `Bearer ${AYRSHARE_API_KEY}` },
       body: formData
     });
 
-    const result = await res.json();
+    const data = await res.json();
+    if (data.error) throw new Error(data.error);
 
-    if (result.status === 'error') throw new Error(result.message || 'Upload failed');
-
-    alert(`✅ Posted successfully to ${selectedPlatforms.join(', ')}!`);
+    alert(`✅ Posted to ${selectedPlatforms.join(', ')}!`);
   } catch (err) {
     console.error(err);
-    alert('❌ Upload failed. See console.');
+    alert('❌ Failed to post.');
   } finally {
     postBtn.disabled = false;
-    postBtn.textContent = 'Upload & Post';
+    postBtn.textContent = '🚀 Upload & Post';
   }
 }
-
