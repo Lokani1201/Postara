@@ -1,16 +1,28 @@
 // === CONFIGURATION ===
-// Replace with your Ayrshare API Key
-const AYRSHARE_API_KEY = 'sk_live_YOUR_AYRSHARE_KEY_HERE';
+// Your Ayrshare API Key (already set)
+const AYRSHARE_API_KEY = 'AF1849F0-6FE746B2-8091E370-379C4E9A';
 
 // DOM Elements
 const uploadArea = document.getElementById('upload-area');
 const fileInput = document.getElementById('file-input');
-const mediaPreview = document.getElementById('media-preview');
+const mediaPreview = document.getElementById('media-preview') || (() => {
+  const el = document.createElement('div');
+  el.id = 'media-preview';
+  uploadArea?.parentNode?.insertBefore(el, uploadArea.nextSibling);
+  return el;
+})();
+
 const aiCaptionBtn = document.getElementById('ai-caption-btn');
-const captionOutput = document.getElementById('caption-output');
+const captionOutput = document.getElementById('caption-output') || (() => {
+  const el = document.createElement('div');
+  el.id = 'caption-output';
+  aiCaptionBtn?.parentNode?.insertBefore(el, aiCaptionBtn.nextSibling);
+  return el;
+})();
+
 const captionInput = document.getElementById('caption-input');
 const postBtn = document.getElementById('post-btn');
-const platformCheckboxes = document.querySelectorAll('.platform-checkbox');
+const platformCheckboxes = document.querySelectorAll('.platform-checkbox input');
 
 // State
 let selectedFile = null;
@@ -74,16 +86,8 @@ function handleFileSelect(e) {
 
   // Preview
   if (file.type.startsWith('image/')) {
-    if (!mediaPreview) {
-      console.error('media-preview not found');
-      return;
-    }
     mediaPreview.innerHTML = `<img src="${URL.createObjectURL(file)}" alt="Preview" style="max-height: 200px;">`;
   } else if (file.type.startsWith('video/')) {
-    if (!mediaPreview) {
-      console.error('media-preview not found');
-      return;
-    }
     mediaPreview.innerHTML = `<video controls style="max-height: 200px;"><source src="${URL.createObjectURL(file)}" type="${file.type}">Your browser does not support the video tag.</video>`;
   }
 }
@@ -112,13 +116,9 @@ async function generateAICaptions() {
     if (data.error) throw new Error(data.error);
 
     aiCaptions = data.captions.split('---').map(c => c.trim()).filter(c => c);
-    if (captionOutput) {
-      captionOutput.innerHTML = aiCaptions
-        .map((caption, i) => `<div class="caption-item"><p>${caption}</p><button type="button" onclick="useCaption(${i})">Use</button></div>`)
-        .join('');
-    } else {
-      console.error('caption-output not found');
-    }
+    captionOutput.innerHTML = aiCaptions
+      .map((caption, i) => `<div class="caption-item"><p>${caption}</p><button type="button" onclick="useCaption(${i})">Use</button></div>`)
+      .join('');
   } catch (error) {
     console.error('AI Error:', error);
     alert('Failed to generate captions. Try again.');
