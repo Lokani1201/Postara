@@ -1,36 +1,35 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-  <meta charset="UTF-8" />
+  <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>Postara – One Click. All Platforms</title>
   <link rel="stylesheet" href="style.css">
 </head>
 <body>
   <div class="container">
-    <h1>🚀 Postara</h1>
-    <p>Upload your media and generate AI captions easily!</p>
+    <h1>Postara</h1>
+    <p>One Click. All Platforms.</p>
 
-    <!-- File Upload Section -->
-    <div id="dropzone" class="dropzone">
-      <p>Drop your image/video here or click to browse</p>
-      <input type="file" id="fileInput" accept="image/*,video/*" style="display:none;">
+    <!-- Upload Section -->
+    <div class="upload-section">
+      <input type="file" id="fileInput" accept="image/*" hidden>
+      <button id="uploadBtn">📤 Upload Image</button>
     </div>
 
-    <!-- Caption Input -->
-    <textarea id="caption" placeholder="Write your caption here..."></textarea>
-
-    <!-- Buttons -->
-    <button id="postBtn" disabled>Upload & Post</button>
-    <button id="aiCaptionBtn">Generate AI Captions</button>
-
-    <!-- AI Caption Output -->
-    <div id="aiResults" style="display:none;">
-      <h3>AI Captions:</h3>
-      <textarea id="aiCaptionOutput" readonly></textarea>
+    <!-- Drop Area -->
+    <div id="dropArea">
+      <p>Drag & Drop your image here</p>
     </div>
 
-    <div id="status"></div>
+    <!-- Caption Box -->
+    <textarea id="captionBox" placeholder="Your caption will appear here..."></textarea>
+
+    <!-- Action Buttons -->
+    <div class="buttons">
+      <button id="generateCaptionBtn">✨ AI Caption Generator</button>
+      <button id="downloadBtn">⬇️ Download Post</button>
+    </div>
   </div>
 
   <script src="script.js"></script>
