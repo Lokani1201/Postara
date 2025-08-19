@@ -8,11 +8,10 @@ export default async function handler(req, res) {
 
     if (!text) return res.status(400).json({ error: "No text provided" });
 
-    // Use the Ayrshare API key from environment variables
-    const apiKey = process.env.AYRSHARE_API_KEY;
-    if (!apiKey) return res.status(500).json({ error: "API key not set" });
+    // Directly using your Ayrshare API key
+    const apiKey = "57EE17FA-3ADC4081-903F57CB-65F688CA";
 
-    // Example: call Ayrshare AI endpoint to generate captions
+    // Call Ayrshare AI endpoint to generate captions
     const response = await fetch("https://app.ayrshare.com/api/social/ai/caption", {
       method: "POST",
       headers: {
