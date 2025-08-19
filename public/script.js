@@ -1,144 +1,190 @@
-// -----------------------------
-// Select DOM elements
-// -----------------------------
-const dropzone = document.getElementById('dropzone');
-const fileInput = document.getElementById('fileInput');
-const preview = document.getElementById('preview');
-const fileInfo = document.getElementById('fileInfo');
-const aiCaptionBtn = document.getElementById('aiCaptionBtn');
-const aiResults = document.getElementById('aiResults');
-const aiCaptionOutput = document.getElementById('aiCaptionOutput');
-const captionInput = document.getElementById('caption');
-const postBtn = document.getElementById('postBtn');
-const buttonText = document.getElementById('buttonText');
-const loadingSpinner = document.getElementById('loadingSpinner');
-const platforms = document.querySelectorAll('.platform-checkbox');
+// === CONFIGURATION ===
+// Replace with your Ayrshare API Key
+const AYRSHARE_API_KEY = 'sk_live_YOUR_AYRSHARE_KEY_HERE';
 
+// DOM Elements
+const uploadArea = document.getElementById('upload-area');
+const fileInput = document.getElementById('file-input');
+const mediaPreview = document.getElementById('media-preview');
+const aiCaptionBtn = document.getElementById('ai-caption-btn');
+const captionOutput = document.getElementById('caption-output');
+const captionInput = document.getElementById('caption-input');
+const postBtn = document.getElementById('post-btn');
+const platformCheckboxes = document.querySelectorAll('.platform-checkbox');
+
+// State
 let selectedFile = null;
+let aiCaptions = [];
 
-// -----------------------------
-// File Upload
-// -----------------------------
-dropzone.addEventListener('click', () => fileInput.click());
-fileInput.addEventListener('change', handleFiles);
+// === EVENT LISTENERS ===
+if (uploadArea) {
+  uploadArea.addEventListener('click', () => fileInput.click());
 
-dropzone.addEventListener('dragover', e => {
-  e.preventDefault();
-  dropzone.style.borderColor = '#333';
-});
+  uploadArea.addEventListener('dragover', (e) => {
+    e.preventDefault();
+    uploadArea.classList.add('dragover');
+  });
 
-dropzone.addEventListener('dragleave', e => {
-  e.preventDefault();
-  dropzone.style.borderColor = '#aaa';
-});
+  uploadArea.addEventListener('dragleave', () => {
+    uploadArea.classList.remove('dragover');
+  });
 
-dropzone.addEventListener('drop', e => {
-  e.preventDefault();
-  dropzone.style.borderColor = '#aaa';
-  const files = e.dataTransfer.files;
-  handleFiles({ target: { files } });
-});
-
-function handleFiles(e) {
-  selectedFile = e.target.files[0];
-  if (!selectedFile) return;
-
-  fileInfo.textContent = `Selected: ${selectedFile.name} (${Math.round(selectedFile.size / 1024)} KB)`;
-
-  preview.innerHTML = '';
-  if (selectedFile.type.startsWith('image/')) {
-    const img = document.createElement('img');
-    img.src = URL.createObjectURL(selectedFile);
-    preview.appendChild(img);
-  } else if (selectedFile.type.startsWith('video/')) {
-    const video = document.createElement('video');
-    video.src = URL.createObjectURL(selectedFile);
-    video.controls = true;
-    preview.appendChild(video);
-  }
-
-  checkEnablePost();
+  uploadArea.addEventListener('drop', (e) => {
+    e.preventDefault();
+    uploadArea.classList.remove('dragover');
+    if (e.dataTransfer.files.length) {
+      fileInput.files = e.dataTransfer.files;
+      handleFileSelect({ target: fileInput });
+    }
+  });
 }
 
-// -----------------------------
-// Enable Post Button
-// -----------------------------
-function checkEnablePost() {
-  postBtn.disabled = !selectedFile || !captionInput.value.trim() || platforms.length === 0;
+if (fileInput) {
+  fileInput.addEventListener('change', handleFileSelect);
 }
 
-// -----------------------------
-// AI Caption Generator
-// -----------------------------
-aiCaptionBtn.addEventListener('click', async () => {
-  if (!selectedFile) {
-    alert('Please upload a file first!');
+if (aiCaptionBtn) {
+  aiCaptionBtn.addEventListener('click', generateAICaptions);
+}
+
+if (postBtn) {
+  postBtn.addEventListener('click', uploadAndPost);
+}
+
+// === FUNCTIONS ===
+function handleFileSelect(e) {
+  const file = e.target.files[0];
+  if (!file) return;
+
+  // Validate file type and size
+  const validTypes = ['image/jpeg', 'image/png', 'video/mp4'];
+  const maxSize = 10 * 1024 * 1024; // 10MB
+
+  if (!validTypes.includes(file.type)) {
+    alert('Only images (JPG, PNG) and videos (MP4) are supported.');
     return;
   }
 
-  aiResults.style.display = 'block';
-  aiCaptionOutput.value = 'Generating...';
+  if (file.size > maxSize) {
+    alert('File is too large. Maximum size is 10MB.');
+    return;
+  }
+
+  selectedFile = file;
+
+  // Preview
+  if (file.type.startsWith('image/')) {
+    if (!mediaPreview) {
+      console.error('media-preview not found');
+      return;
+    }
+    mediaPreview.innerHTML = `<img src="${URL.createObjectURL(file)}" alt="Preview" style="max-height: 200px;">`;
+  } else if (file.type.startsWith('video/')) {
+    if (!mediaPreview) {
+      console.error('media-preview not found');
+      return;
+    }
+    mediaPreview.innerHTML = `<video controls style="max-height: 200px;"><source src="${URL.createObjectURL(file)}" type="${file.type}">Your browser does not support the video tag.</video>`;
+  }
+}
+
+async function generateAICaptions() {
+  if (!selectedFile) {
+    alert('Please upload a media file first.');
+    return;
+  }
+
+  if (!aiCaptionBtn) return;
+
+  aiCaptionBtn.disabled = true;
+  aiCaptionBtn.innerHTML = 'Generating...';
 
   try {
-    const formData = new FormData();
-    formData.append('file', selectedFile);
+    const prompt = `Generate 5 short, engaging captions for a ${selectedFile.type.startsWith('image') ? 'photo' : 'video'} post. Use emojis, hashtags, and different tones (funny, serious, motivational). Each caption should be 1–2 sentences. Separate them with "---"`;
 
-    const res = await fetch('/api/generate-caption', {
+    const response = await fetch('/api/generate-caption', {
       method: 'POST',
-      body: formData
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ prompt })
     });
 
-    const data = await res.json();
-    if (data && data.caption) {
-      aiCaptionOutput.value = data.caption;
-    } else {
-      aiCaptionOutput.value = 'AI could not generate a caption.';
-    }
-  } catch (err) {
-    aiCaptionOutput.value = 'Error generating caption.';
-    console.error(err);
-  }
-});
+    const data = await response.json();
+    if (data.error) throw new Error(data.error);
 
-// -----------------------------
-// Post Button Click
-// -----------------------------
-postBtn.addEventListener('click', async () => {
-  if (!selectedFile) return;
+    aiCaptions = data.captions.split('---').map(c => c.trim()).filter(c => c);
+    if (captionOutput) {
+      captionOutput.innerHTML = aiCaptions
+        .map((caption, i) => `<div class="caption-item"><p>${caption}</p><button type="button" onclick="useCaption(${i})">Use</button></div>`)
+        .join('');
+    } else {
+      console.error('caption-output not found');
+    }
+  } catch (error) {
+    console.error('AI Error:', error);
+    alert('Failed to generate captions. Try again.');
+  } finally {
+    if (aiCaptionBtn) {
+      aiCaptionBtn.disabled = false;
+      aiCaptionBtn.innerHTML = '✨ Generate 5 Captions';
+    }
+  }
+}
+
+function useCaption(index) {
+  if (captionInput) {
+    captionInput.value = aiCaptions[index];
+  }
+}
+
+async function uploadAndPost() {
+  if (!selectedFile) {
+    alert('Please upload a media file first.');
+    return;
+  }
+
+  const selectedPlatforms = Array.from(platformCheckboxes)
+    .filter(cb => cb.checked)
+    .map(cb => cb.value);
+
+  if (selectedPlatforms.length === 0) {
+    alert('Please select at least one platform.');
+    return;
+  }
+
+  if (!postBtn) return;
+
   postBtn.disabled = true;
-  loadingSpinner.style.display = 'inline-block';
-  buttonText.textContent = 'Uploading...';
-
-  const formData = new FormData();
-  formData.append('file', selectedFile);
-  formData.append('caption', captionInput.value);
-  const selectedPlatforms = Array.from(platforms).filter(p => p.checked).map(p => p.value);
-  formData.append('platforms', JSON.stringify(selectedPlatforms));
+  postBtn.innerHTML = 'Uploading...';
 
   try {
-    const res = await fetch('/api/upload', {
+    // Step 1: Upload to Ayrshare
+    const formData = new FormData();
+    formData.append('media', selectedFile);
+    formData.append('platforms', JSON.stringify(selectedPlatforms));
+    formData.append('post', captionInput.value || 'Check out this post!');
+
+    const response = await fetch('https://api.ayrshare.com/upload', {
       method: 'POST',
+      headers: {
+        'Authorization': `Bearer ${AYRSHARE_API_KEY}`
+      },
       body: formData
     });
 
-    const data = await res.json();
-    if (data.success) {
-      alert('Posted successfully!');
-      captionInput.value = '';
-      preview.innerHTML = '';
-      fileInfo.textContent = '';
-      selectedFile = null;
-      platforms.forEach(p => (p.checked = false));
-    } else {
-      alert('Upload failed.');
-      console.error(data.error);
-    }
-  } catch (err) {
-    alert('Error posting file.');
-    console.error(err);
-  }
+    const result = await response.json();
 
-  buttonText.textContent = '🚀 Upload & Post';
-  loadingSpinner.style.display = 'none';
-  checkEnablePost();
-});
+    if (result.status === 'error') {
+      throw new Error(result.message);
+    }
+
+    alert(`Posted successfully to ${selectedPlatforms.join(', ')}!`);
+  } catch (error) {
+    console.error('Post Error:', error);
+    alert('Failed to post. Check console for details.');
+  } finally {
+    if (postBtn) {
+      postBtn.disabled = false;
+      postBtn.innerHTML = 'Upload & Post';
+    }
+  }
+}
