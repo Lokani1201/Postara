@@ -2,104 +2,45 @@
 <html lang="en">
 <head>
   <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Postara – One Click. All Platforms</title>
-  <link rel="preconnect" href="https://fonts.googleapis.com">
-  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
-  <link rel="stylesheet" href="style.css">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>Postara</title>
+  <link rel="stylesheet" href="style.css" />
+  <meta name="description" content="One click. Post everywhere.">
 </head>
 <body>
   <div class="container">
-    <header class="header">
-      <div class="logo">
-        <div class="logo-icon">🚀</div>
-        <div>
-          <h1>Postara</h1>
-          <div class="tagline">One click. Post everywhere.</div>
-        </div>
-      </div>
-    </header>
+    <h1>Postara</h1>
+    <p>One click. Post everywhere.</p>
 
-    <section class="form-section">
-      <div class="section-title">📎 Media Upload</div>
-      <div id="dropzone" class="dropzone">
-        <div class="dropzone-content">
-          <div class="upload-icon">📁</div>
-          <div class="upload-text">Drop your media here or click to browse</div>
-          <div class="upload-hint">Support: Images & Videos (Max 10MB)</div>
-        </div>
-      </div>
-      <input type="file" id="fileInput" style="display: none;" accept="image/*,video/*" />
-      <div id="fileInfo" class="file-info"></div>
-      <div id="preview" class="preview"></div>
-    </section>
+    <div class="upload-area" id="upload-area">
+      Drop your media here or click to browse<br>
+      <small>Support: Images & Videos (Max 10MB)</small>
+    </div>
+    <input type="file" id="file-input" accept="image/*,video/*" style="display:none"/>
 
-    <section class="form-section">
-      <div class="section-title">🤖 AI Caption Generator</div>
-      <button id="aiCaptionBtn" class="ai-button">✨ Generate 5 Captions</button>
-      <div id="aiResults" style="margin-top: 16px; display: none;">
-        <p>Try one of these:</p>
-        <textarea id="aiCaptionOutput" class="caption-input" placeholder="AI-generated captions will appear here..." style="margin-top: 10px; height: 150px;"></textarea>
-      </div>
-    </section>
+    <button id="ai-caption-btn">✨ Generate 5 Captions</button>
+    <textarea id="caption-input" placeholder="Your caption"></textarea>
 
-    <section class="form-section">
-      <div class="section-title">✍️ Caption & Content</div>
-      <textarea id="caption" class="caption-input" placeholder="Write your engaging caption here... ✨ Use emojis & hashtags 🚀 Keep it authentic 📈"></textarea>
-    </section>
+    <div class="platforms" id="platforms">
+      <label class="platform-checkbox"><input type="checkbox" value="tiktok"> TikTok</label>
+      <label class="platform-checkbox"><input type="checkbox" value="instagram"> Instagram</label>
+      <label class="platform-checkbox"><input type="checkbox" value="twitter"> X / Twitter</label>
+      <label class="platform-checkbox"><input type="checkbox" value="linkedin"> LinkedIn</label>
+      <label class="platform-checkbox"><input type="checkbox" value="facebook"> Facebook</label>
+      <label class="platform-checkbox"><input type="checkbox" value="pinterest"> Pinterest</label>
+      <label class="platform-checkbox"><input type="checkbox" value="youtube"> YouTube</label>
+      <label class="platform-checkbox"><input type="checkbox" value="bluesky"> Bluesky</label>
+      <label class="platform-checkbox"><input type="checkbox" value="telegram"> Telegram</label>
+      <label class="platform-checkbox"><input type="checkbox" value="threads"> Threads</label>
+      <label class="platform-checkbox"><input type="checkbox" value="snapchat"> Snapchat</label>
+      <label class="platform-checkbox"><input type="checkbox" value="reddit"> Reddit</label>
+      <label class="platform-checkbox"><input type="checkbox" value="google_business"> Google Business</label>
+    </div>
 
-    <section class="form-section">
-      <div class="section-title">🌐 Select Platforms</div>
-      <div class="platforms-grid">
-        <label class="platform-card" data-platform="facebook">
-          <input type="checkbox" class="platform-checkbox" value="facebook">
-          <div class="platform-icon">📘</div>
-          <div class="platform-name">Facebook</div>
-        </label>
-        <label class="platform-card" data-platform="instagram">
-          <input type="checkbox" class="platform-checkbox" value="instagram">
-          <div class="platform-icon">📸</div>
-          <div class="platform-name">Instagram</div>
-        </label>
-        <label class="platform-card" data-platform="linkedin">
-          <input type="checkbox" class="platform-checkbox" value="linkedin">
-          <div class="platform-icon">🔗</div>
-          <div class="platform-name">LinkedIn</div>
-        </label>
-        <label class="platform-card" data-platform="twitter">
-          <input type="checkbox" class="platform-checkbox" value="twitter">
-          <div class="platform-icon">🐦</div>
-          <div class="platform-name">X / Twitter</div>
-        </label>
-        <label class="platform-card" data-platform="tiktok">
-          <input type="checkbox" class="platform-checkbox" value="tiktok">
-          <div class="platform-icon">🎵</div>
-          <div class="platform-name">TikTok</div>
-        </label>
-        <label class="platform-card" data-platform="youtube">
-          <input type="checkbox" class="platform-checkbox" value="youtube">
-          <div class="platform-icon">▶️</div>
-          <div class="platform-name">YouTube</div>
-        </label>
-      </div>
-    </section>
-
-    <button id="postBtn" class="post-button" disabled>
-      <span id="buttonText">🚀 Upload & Post</span>
-      <div id="loadingSpinner" class="loading-spinner" style="display: none;"></div>
-    </button>
-
-    <div id="status" class="status"></div>
-
-    <footer class="footer">
-      <div>🌟 Keep creating, keep sharing, conquer the world! 🚀</div>
-      <div style="margin-top: 12px; font-size: 0.95rem; opacity: 0.8;">
-        Powered by Ayrshare API • Built with ❤️ for creators
-      </div>
-    </footer>
+    <button id="post-btn">Upload & Post</button>
   </div>
 
+  <!-- ✅ script.js is moved to the bottom — DO NOT move it back -->
   <script src="script.js"></script>
 </body>
 </html>
