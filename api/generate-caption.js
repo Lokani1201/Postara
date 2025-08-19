@@ -6,37 +6,38 @@ export default async function handler(req, res) {
   }
 
   try {
-    const { url } = req.body;
-    if (!url) return res.status(400).json({ error: "No file URL provided" });
+    const { fileUrl } = req.body;
 
-    // Your Ayrshare API key (from environment variable)
-    const API_KEY = process.env.AYRSHARE_API_KEY;
+    if (!fileUrl) {
+      return res.status(400).json({ error: "File URL is required" });
+    }
 
-    // Generate AI captions
-    const response = await fetch("https://api.ayrshare.com/v1/caption", {
+    // Your Ayrshare API key
+    const AYRSHARE_API_KEY = "57EE17FA-3ADC4081-903F57CB-65F688CA";
+
+    // Call Ayrshare AI caption generation endpoint
+    const response = await fetch("https://app.ayrshare.com/api/caption", {
       method: "POST",
       headers: {
-        "Authorization": `Bearer ${API_KEY}`,
         "Content-Type": "application/json",
+        "Authorization": `Bearer ${AYRSHARE_API_KEY}`,
       },
       body: JSON.stringify({
-        url: url,
-        // you can adjust options if needed
-        n: 5, 
-        tone: "engaging",
+        url: fileUrl,
+        count: 5 // number of AI captions to generate
       }),
     });
 
-    const data = await response.json();
+    const result = await response.json();
 
     if (!response.ok) {
-      return res.status(response.status).json({ error: data.error || "Caption generation failed" });
+      return res.status(500).json({ error: result.message || "Caption generation failed" });
     }
 
-    // Assume API returns { captions: ["caption1", "caption2", ...] }
-    return res.status(200).json({ captions: data.captions || [] });
-  } catch (err) {
-    console.error(err);
-    res.status(500).json({ error: "Server error" });
+    // result should include captions array
+    res.status(200).json({ captions: result.captions || [] });
+  } catch (error) {
+    console.error("Error generating captions:", error);
+    res.status(500).json({ error: "Internal Server Error" });
   }
 }
