@@ -1,5 +1,4 @@
 // api/generate-caption.js
-import fetch from "node-fetch";
 
 export default async function handler(req, res) {
   if (req.method !== "POST") {
@@ -7,35 +6,37 @@ export default async function handler(req, res) {
   }
 
   try {
-    const { text } = req.body;
+    const { url } = req.body;
+    if (!url) return res.status(400).json({ error: "No file URL provided" });
 
-    if (!text) {
-      return res.status(400).json({ error: "Text is required" });
-    }
+    // Your Ayrshare API key (from environment variable)
+    const API_KEY = process.env.AYRSHARE_API_KEY;
 
-    // Replace with your API key
-    const API_KEY = "57EE17FA-3ADC4081-903F57CB-65F688CA";
-
-    const response = await fetch("https://app.ayrshare.com/api/social/caption", {
+    // Generate AI captions
+    const response = await fetch("https://api.ayrshare.com/v1/caption", {
       method: "POST",
       headers: {
-        "Content-Type": "application/json",
         "Authorization": `Bearer ${API_KEY}`,
+        "Content-Type": "application/json",
       },
-      body: JSON.stringify({ text }),
+      body: JSON.stringify({
+        url: url,
+        // you can adjust options if needed
+        n: 5, 
+        tone: "engaging",
+      }),
     });
-
-    if (!response.ok) {
-      const errorData = await response.json();
-      return res.status(500).json({ error: errorData.message || "API error" });
-    }
 
     const data = await response.json();
 
-    // Return the AI-generated caption
-    return res.status(200).json({ caption: data.caption || "" });
-  } catch (error) {
-    console.error("Error generating caption:", error);
-    return res.status(500).json({ error: "Internal Server Error" });
+    if (!response.ok) {
+      return res.status(response.status).json({ error: data.error || "Caption generation failed" });
+    }
+
+    // Assume API returns { captions: ["caption1", "caption2", ...] }
+    return res.status(200).json({ captions: data.captions || [] });
+  } catch (err) {
+    console.error(err);
+    res.status(500).json({ error: "Server error" });
   }
 }
