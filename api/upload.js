@@ -2,11 +2,10 @@ import formidable from "formidable";
 import fs from "fs";
 import path from "path";
 
-// Disable default body parsing
 export const config = {
   api: {
-    bodyParser: false,
-  },
+    bodyParser: false
+  }
 };
 
 export default async function handler(req, res) {
@@ -15,11 +14,13 @@ export default async function handler(req, res) {
   }
 
   const form = new formidable.IncomingForm();
-  form.uploadDir = "./public/uploads"; // folder to save files
+  form.uploadDir = path.join(process.cwd(), "/public/uploads");
   form.keepExtensions = true;
 
-  // Make sure uploads folder exists
-  if (!fs.existsSync(form.uploadDir)) fs.mkdirSync(form.uploadDir, { recursive: true });
+  // Ensure the uploads folder exists
+  if (!fs.existsSync(form.uploadDir)) {
+    fs.mkdirSync(form.uploadDir, { recursive: true });
+  }
 
   form.parse(req, (err, fields, files) => {
     if (err) {
@@ -28,12 +29,15 @@ export default async function handler(req, res) {
     }
 
     const file = files.file;
-    if (!file) return res.status(400).json({ error: "No file provided" });
+    if (!file) {
+      return res.status(400).json({ error: "No file uploaded" });
+    }
 
-    const newPath = path.join(form.uploadDir, file.originalFilename);
-    fs.renameSync(file.filepath, newPath);
+    const filePath = file.filepath || file.path; // for formidable v2 or v1
+    const fileName = path.basename(filePath);
 
-    const url = `/uploads/${file.originalFilename}`;
-    res.status(200).json({ url });
+    // Return public URL
+    const publicUrl = `/uploads/${fileName}`;
+    return res.status(200).json({ url: publicUrl });
   });
 }
