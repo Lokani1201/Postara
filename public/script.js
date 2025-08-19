@@ -1,40 +1,55 @@
-// Select DOM elements
-const aiCaptionBtn = document.getElementById("aiCaptionBtn");
-const aiResults = document.getElementById("aiResults");
-const aiCaptionOutput = document.getElementById("aiCaptionOutput");
+// Elements
+const dropzone = document.getElementById("dropzone");
+const fileInput = document.getElementById("fileInput");
+const preview = document.getElementById("preview");
+const fileInfo = document.getElementById("fileInfo");
 
-// AI Caption button click
-aiCaptionBtn.addEventListener("click", async () => {
-  const captionText = document.getElementById("caption").value;
+// Drag & Drop
+dropzone.addEventListener("click", () => fileInput.click());
+dropzone.addEventListener("dragover", (e) => e.preventDefault());
+dropzone.addEventListener("drop", async (e) => {
+  e.preventDefault();
+  const files = e.dataTransfer.files;
+  if (files.length > 0) await uploadFile(files[0]);
+});
 
-  if (!captionText) {
-    alert("Please write a base text in the caption box first.");
-    return;
-  }
+// File input change
+fileInput.addEventListener("change", async () => {
+  if (fileInput.files.length > 0) await uploadFile(fileInput.files[0]);
+});
 
-  aiCaptionBtn.disabled = true;
-  aiCaptionBtn.textContent = "✨ Generating...";
+// Upload function
+async function uploadFile(file) {
+  const formData = new FormData();
+  formData.append("file", file);
+
+  fileInfo.textContent = "Uploading...";
+  preview.innerHTML = "";
 
   try {
-    const response = await fetch("/api/generate-caption", {
+    const response = await fetch("/api/upload", {
       method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ text: captionText })
+      body: formData
     });
-
     const data = await response.json();
 
-    if (data.error) {
-      alert("Error: " + data.error);
+    if (response.ok) {
+      fileInfo.textContent = `Uploaded: ${file.name}`;
+      
+      // Show preview
+      if (file.type.startsWith("image/")) {
+        preview.innerHTML = `<img src="${data.url}" style="max-width: 100%; border-radius: 8px;" />`;
+      } else if (file.type.startsWith("video/")) {
+        preview.innerHTML = `<video controls style="max-width: 100%; border-radius: 8px;">
+          <source src="${data.url}" type="${file.type}" />
+        </video>`;
+      }
+
     } else {
-      aiResults.style.display = "block";
-      aiCaptionOutput.value = data.captions.join("\n\n");
+      fileInfo.textContent = `Error: ${data.error}`;
     }
   } catch (err) {
     console.error(err);
-    alert("Failed to generate captions. Check console for details.");
-  } finally {
-    aiCaptionBtn.disabled = false;
-    aiCaptionBtn.textContent = "✨ Generate 5 Captions";
+    fileInfo.textContent = "Upload failed. Try again.";
   }
-});
+}
