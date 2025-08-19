@@ -1,7 +1,5 @@
 import fetch from "node-fetch";
 
-const API_KEY = "57EE17FA-3ADC4081-903F57CB-65F688CA";
-
 export default async function handler(req, res) {
   if (req.method !== "POST") {
     return res.status(405).json({ error: "Method not allowed" });
@@ -11,25 +9,30 @@ export default async function handler(req, res) {
     const { text } = req.body;
 
     if (!text || text.trim() === "") {
-      return res.status(400).json({ error: "No text provided" });
+      return res.status(400).json({ error: "Text is required" });
     }
 
-    // Example API request to Ayrshare for AI caption (adjust endpoint if needed)
-    const response = await fetch("https://app.ayrshare.com/api/caption", {
+    // Use your Ayrshare API key from environment variables
+    const API_KEY = process.env.AYRSHARE_API_KEY;
+
+    const response = await fetch("https://app.ayrshare.com/api/post", {
       method: "POST",
       headers: {
-        "Authorization": `Bearer ${API_KEY}`,
         "Content-Type": "application/json",
+        "Authorization": `Bearer ${API_KEY}`,
       },
-      body: JSON.stringify({ text }),
+      body: JSON.stringify({
+        post: text,
+        platforms: ["twitter"], // dummy platform, just for AI caption
+      }),
     });
 
     const data = await response.json();
 
-    // Return captions
-    res.status(200).json({ captions: data.captions || [] });
-  } catch (error) {
-    console.error(error);
-    res.status(500).json({ error: "AI caption generation failed" });
+    // Return the AI-generated caption
+    res.status(200).json({ caption: data.post || "Try again" });
+  } catch (err) {
+    console.error(err);
+    res.status(500).json({ error: "Caption generation failed" });
   }
 }
