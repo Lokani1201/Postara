@@ -1,107 +1,122 @@
-// public/script.js
+// Select elements
+const dropzone = document.getElementById("dropzone");
+const fileInput = document.getElementById("fileInput");
+const fileInfo = document.getElementById("fileInfo");
+const preview = document.getElementById("preview");
+const aiCaptionBtn = document.getElementById("aiCaptionBtn");
+const aiResults = document.getElementById("aiResults");
+const aiCaptionOutput = document.getElementById("aiCaptionOutput");
+const captionInput = document.getElementById("caption");
+const postBtn = document.getElementById("postBtn");
+const status = document.getElementById("status");
+const platformCheckboxes = document.querySelectorAll(".platform-checkbox");
 
-document.addEventListener("DOMContentLoaded", () => {
-  const apiKeyInput = document.getElementById("apiKey");
-  const fileInput = document.getElementById("fileInput");
-  const dropzone = document.getElementById("dropzone");
-  const preview = document.getElementById("preview");
-  const fileInfo = document.getElementById("fileInfo");
-  const uploadBtn = document.getElementById("postBtn");
-  const aiCaptionBtn = document.getElementById("aiCaptionBtn");
-  const aiCaptionOutput = document.getElementById("aiCaptionOutput");
-  const aiResults = document.getElementById("aiResults");
-  const captionInput = document.getElementById("caption");
+let uploadedFile = null;
 
-  let selectedFile;
+// Handle drag & drop
+dropzone.addEventListener("click", () => fileInput.click());
+dropzone.addEventListener("dragover", (e) => {
+  e.preventDefault();
+  dropzone.style.borderColor = "#007bff";
+});
+dropzone.addEventListener("dragleave", (e) => {
+  e.preventDefault();
+  dropzone.style.borderColor = "#ccc";
+});
+dropzone.addEventListener("drop", (e) => {
+  e.preventDefault();
+  dropzone.style.borderColor = "#ccc";
+  if (e.dataTransfer.files.length > 0) handleFile(e.dataTransfer.files[0]);
+});
 
-  // Drag & Drop
-  dropzone.addEventListener("click", () => fileInput.click());
+fileInput.addEventListener("change", (e) => {
+  if (e.target.files.length > 0) handleFile(e.target.files[0]);
+});
 
-  dropzone.addEventListener("dragover", (e) => {
-    e.preventDefault();
-    dropzone.classList.add("dragover");
-  });
-
-  dropzone.addEventListener("dragleave", (e) => {
-    e.preventDefault();
-    dropzone.classList.remove("dragover");
-  });
-
-  dropzone.addEventListener("drop", (e) => {
-    e.preventDefault();
-    dropzone.classList.remove("dragover");
-    const files = e.dataTransfer.files;
-    if (files.length > 0) handleFile(files[0]);
-  });
-
-  fileInput.addEventListener("change", (e) => {
-    if (e.target.files.length > 0) handleFile(e.target.files[0]);
-  });
-
-  function handleFile(file) {
-    selectedFile = file;
-    fileInfo.textContent = `Selected: ${file.name} (${Math.round(file.size / 1024)} KB)`;
-
-    const reader = new FileReader();
-    reader.onload = function (e) {
-      preview.innerHTML = `<img src="${e.target.result}" style="max-width:100%; max-height:200px;" />`;
-    };
-    reader.readAsDataURL(file);
-
-    uploadBtn.disabled = false;
+// Handle file
+function handleFile(file) {
+  uploadedFile = file;
+  fileInfo.textContent = `${file.name} (${Math.round(file.size / 1024)} KB)`;
+  preview.innerHTML = "";
+  if (file.type.startsWith("image/")) {
+    const img = document.createElement("img");
+    img.src = URL.createObjectURL(file);
+    preview.appendChild(img);
+  } else if (file.type.startsWith("video/")) {
+    const video = document.createElement("video");
+    video.src = URL.createObjectURL(file);
+    video.controls = true;
+    preview.appendChild(video);
   }
+  checkPostBtn();
+}
 
-  // Upload Button
-  uploadBtn.addEventListener("click", async () => {
-    if (!selectedFile) return alert("Please select a file first.");
+// Enable post button if conditions met
+function checkPostBtn() {
+  const anyPlatformSelected = Array.from(platformCheckboxes).some(cb => cb.checked);
+  postBtn.disabled = !uploadedFile || !anyPlatformSelected;
+}
 
-    const reader = new FileReader();
-    reader.onload = async function (e) {
-      const base64 = e.target.result;
+// Platform checkbox change
+platformCheckboxes.forEach(cb => cb.addEventListener("change", checkPostBtn));
 
-      try {
-        const res = await fetch("/api/upload", {
-          method: "POST",
-          headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({ file: base64 }),
-        });
-
-        const data = await res.json();
-        if (data.fileUrl) {
-          alert("Upload successful!");
-          console.log("Uploaded file URL:", data.fileUrl);
-        } else {
-          alert("Upload failed.");
-        }
-      } catch (err) {
-        console.error(err);
-        alert("Error uploading file.");
-      }
-    };
-    reader.readAsDataURL(selectedFile);
-  });
-
-  // AI Caption Button
-  aiCaptionBtn.addEventListener("click", async () => {
-    const text = captionInput.value || "Sample prompt for AI captions";
-
-    try {
-      const res = await fetch("/api/generate-caption", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ prompt: text }),
-      });
-
-      const data = await res.json();
-      if (data.captions) {
-        aiResults.style.display = "block";
-        aiCaptionOutput.value = data.captions.join("\n\n");
-      } else {
-        alert("AI caption generation failed.");
-      }
-    } catch (err) {
-      console.error(err);
-      alert("Error generating AI captions.");
+// AI caption button
+aiCaptionBtn.addEventListener("click", async () => {
+  if (!uploadedFile) {
+    alert("Please upload a file first.");
+    return;
+  }
+  aiResults.style.display = "block";
+  aiCaptionOutput.value = "Generating captions...";
+  try {
+    const formData = new FormData();
+    formData.append("file", uploadedFile);
+    const res = await fetch("/api/generate-caption", {
+      method: "POST",
+      body: formData
+    });
+    const data = await res.json();
+    if (data.captions) {
+      aiCaptionOutput.value = data.captions.join("\n\n");
+    } else {
+      aiCaptionOutput.value = "No captions generated. Try again.";
     }
-  });
+  } catch (err) {
+    aiCaptionOutput.value = "Error generating captions.";
+    console.error(err);
+  }
+});
+
+// Post button click
+postBtn.addEventListener("click", async () => {
+  if (!uploadedFile) return;
+  const selectedPlatforms = Array.from(platformCheckboxes)
+    .filter(cb => cb.checked)
+    .map(cb => cb.value);
+
+  const postData = new FormData();
+  postData.append("file", uploadedFile);
+  postData.append("caption", captionInput.value);
+  postData.append("platforms", JSON.stringify(selectedPlatforms));
+
+  postBtn.disabled = true;
+  status.textContent = "Uploading and posting...";
+
+  try {
+    const res = await fetch("/api/upload", {
+      method: "POST",
+      body: postData
+    });
+    const data = await res.json();
+    if (data.success) {
+      status.textContent = "Posted successfully!";
+    } else {
+      status.textContent = "Error posting: " + data.message;
+    }
+  } catch (err) {
+    console.error(err);
+    status.textContent = "Error posting file.";
+  } finally {
+    postBtn.disabled = false;
+  }
 });
