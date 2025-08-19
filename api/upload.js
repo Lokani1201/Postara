@@ -1,11 +1,12 @@
+// api/upload.js
+import fetch from "node-fetch";
 import formidable from "formidable";
 import fs from "fs";
-import path from "path";
 
 export const config = {
   api: {
-    bodyParser: false
-  }
+    bodyParser: false, // disable default body parser
+  },
 };
 
 export default async function handler(req, res) {
@@ -14,30 +15,41 @@ export default async function handler(req, res) {
   }
 
   const form = new formidable.IncomingForm();
-  form.uploadDir = path.join(process.cwd(), "/public/uploads");
-  form.keepExtensions = true;
-
-  // Ensure the uploads folder exists
-  if (!fs.existsSync(form.uploadDir)) {
-    fs.mkdirSync(form.uploadDir, { recursive: true });
-  }
-
-  form.parse(req, (err, fields, files) => {
+  form.parse(req, async (err, fields, files) => {
     if (err) {
-      console.error(err);
-      return res.status(500).json({ error: "File upload failed" });
+      console.error("Form parse error:", err);
+      return res.status(500).json({ error: "Form parsing error" });
     }
 
-    const file = files.file;
-    if (!file) {
-      return res.status(400).json({ error: "No file uploaded" });
+    if (!files.file) {
+      return res.status(400).json({ error: "File is required" });
     }
 
-    const filePath = file.filepath || file.path; // for formidable v2 or v1
-    const fileName = path.basename(filePath);
+    try {
+      const file = files.file;
+      const fileData = fs.readFileSync(file.filepath);
 
-    // Return public URL
-    const publicUrl = `/uploads/${fileName}`;
-    return res.status(200).json({ url: publicUrl });
+      // Replace with your API key
+      const API_KEY = "57EE17FA-3ADC4081-903F57CB-65F688CA";
+
+      const response = await fetch("https://app.ayrshare.com/api/social/upload", {
+        method: "POST",
+        headers: {
+          "Authorization": `Bearer ${API_KEY}`,
+        },
+        body: fileData,
+      });
+
+      if (!response.ok) {
+        const errorData = await response.json();
+        return res.status(500).json({ error: errorData.message || "Upload failed" });
+      }
+
+      const data = await response.json();
+      return res.status(200).json({ url: data.url || "" });
+    } catch (error) {
+      console.error("Upload error:", error);
+      return res.status(500).json({ error: "Internal server error" });
+    }
   });
 }
