@@ -6,12 +6,12 @@
   <title>Postara – One Click. All Platforms</title>
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
   <link rel="stylesheet" href="style.css">
 </head>
 <body>
   <div class="container">
-    <div class="header">
+    <header class="header">
       <div class="logo">
         <div class="logo-icon">🚀</div>
         <div>
@@ -19,29 +19,9 @@
           <div class="tagline">One click. Post everywhere.</div>
         </div>
       </div>
-    </div>
+    </header>
 
-    <div class="stats">
-      <div class="stat-item">
-        <span class="stat-number" id="platformCount">13</span>
-        <span class="stat-label">Platforms</span>
-      </div>
-      <div class="stat-item">
-        <span class="stat-number">10MB</span>
-        <span class="stat-label">Max File Size</span>
-      </div>
-      <div class="stat-item">
-        <span class="stat-number">1</span>
-        <span class="stat-label">Click to Post</span>
-      </div>
-    </div>
-
-    <div class="form-section">
-      <div class="section-title">🔐 API Configuration</div>
-      <input type="password" id="apiKey" class="api-input" placeholder="Enter your Ayrshare API Key" />
-    </div>
-
-    <div class="form-section">
+    <section class="form-section">
       <div class="section-title">📎 Media Upload</div>
       <div id="dropzone" class="dropzone">
         <div class="dropzone-content">
@@ -53,52 +33,57 @@
       <input type="file" id="fileInput" style="display: none;" accept="image/*,video/*" />
       <div id="fileInfo" class="file-info"></div>
       <div id="preview" class="preview"></div>
-    </div>
+    </section>
 
-    <div class="form-section">
+    <section class="form-section">
       <div class="section-title">🤖 AI Caption Generator</div>
       <button id="aiCaptionBtn" class="ai-button">✨ Generate 5 Captions</button>
       <div id="aiResults" style="margin-top: 16px; display: none;">
         <p>Try one of these:</p>
         <textarea id="aiCaptionOutput" class="caption-input" placeholder="AI-generated captions will appear here..." style="margin-top: 10px; height: 150px;"></textarea>
       </div>
-    </div>
+    </section>
 
-    <div class="form-section">
+    <section class="form-section">
       <div class="section-title">✍️ Caption & Content</div>
-      <textarea id="caption" class="caption-input" placeholder="Write your engaging caption here... ✨ Pro tip: Use emojis and hashtags to boost engagement!🚀"></textarea>
-    </div>
+      <textarea id="caption" class="caption-input" placeholder="Write your engaging caption here... ✨ Use emojis & hashtags 🚀 Keep it authentic 📈"></textarea>
+    </section>
 
-    <div class="form-section">
+    <section class="form-section">
       <div class="section-title">🌐 Select Platforms</div>
       <div class="platforms-grid">
-        <label class="platform-card bluesky" data-platform="bluesky">
-          <input type="checkbox" class="platform-checkbox" value="bluesky">
-          <div class="platform-icon">🌀</div>
-          <div class="platform-name">Bluesky</div>
-        </label>
-        <label class="platform-card facebook" data-platform="facebook">
+        <label class="platform-card" data-platform="facebook">
           <input type="checkbox" class="platform-checkbox" value="facebook">
           <div class="platform-icon">📘</div>
           <div class="platform-name">Facebook</div>
         </label>
-        <label class="platform-card instagram" data-platform="instagram">
+        <label class="platform-card" data-platform="instagram">
           <input type="checkbox" class="platform-checkbox" value="instagram">
           <div class="platform-icon">📸</div>
           <div class="platform-name">Instagram</div>
         </label>
-        <label class="platform-card twitter" data-platform="twitter">
-          <input type="checkbox" class="platform-checkbox" value="twitter">
-          <div class="platform-icon">🐦</div>
-          <div class="platform-name">X / Twitter</div>
-        </label>
-        <label class="platform-card linkedin" data-platform="linkedin">
+        <label class="platform-card" data-platform="linkedin">
           <input type="checkbox" class="platform-checkbox" value="linkedin">
           <div class="platform-icon">🔗</div>
           <div class="platform-name">LinkedIn</div>
         </label>
+        <label class="platform-card" data-platform="twitter">
+          <input type="checkbox" class="platform-checkbox" value="twitter">
+          <div class="platform-icon">🐦</div>
+          <div class="platform-name">X / Twitter</div>
+        </label>
+        <label class="platform-card" data-platform="tiktok">
+          <input type="checkbox" class="platform-checkbox" value="tiktok">
+          <div class="platform-icon">🎵</div>
+          <div class="platform-name">TikTok</div>
+        </label>
+        <label class="platform-card" data-platform="youtube">
+          <input type="checkbox" class="platform-checkbox" value="youtube">
+          <div class="platform-icon">▶️</div>
+          <div class="platform-name">YouTube</div>
+        </label>
       </div>
-    </div>
+    </section>
 
     <button id="postBtn" class="post-button" disabled>
       <span id="buttonText">🚀 Upload & Post</span>
@@ -107,12 +92,12 @@
 
     <div id="status" class="status"></div>
 
-    <div class="footer">
+    <footer class="footer">
       <div>🌟 Keep creating, keep sharing, conquer the world! 🚀</div>
       <div style="margin-top: 12px; font-size: 0.95rem; opacity: 0.8;">
         Powered by Ayrshare API • Built with ❤️ for creators
       </div>
-    </div>
+    </footer>
   </div>
 
   <script src="script.js"></script>
