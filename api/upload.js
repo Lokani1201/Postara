@@ -2,9 +2,11 @@ import formidable from "formidable";
 import fs from "fs";
 import path from "path";
 
-// Disable body parsing (for file uploads)
+// Disable default body parsing
 export const config = {
-  api: { bodyParser: false },
+  api: {
+    bodyParser: false,
+  },
 };
 
 export default async function handler(req, res) {
@@ -13,8 +15,11 @@ export default async function handler(req, res) {
   }
 
   const form = new formidable.IncomingForm();
-  form.uploadDir = path.join(process.cwd(), "/public/uploads"); // make sure /public/uploads exists
+  form.uploadDir = "./public/uploads"; // folder to save files
   form.keepExtensions = true;
+
+  // Make sure uploads folder exists
+  if (!fs.existsSync(form.uploadDir)) fs.mkdirSync(form.uploadDir, { recursive: true });
 
   form.parse(req, (err, fields, files) => {
     if (err) {
@@ -23,7 +28,12 @@ export default async function handler(req, res) {
     }
 
     const file = files.file;
-    const filePath = `/uploads/${path.basename(file.filepath)}`;
-    res.status(200).json({ url: filePath });
+    if (!file) return res.status(400).json({ error: "No file provided" });
+
+    const newPath = path.join(form.uploadDir, file.originalFilename);
+    fs.renameSync(file.filepath, newPath);
+
+    const url = `/uploads/${file.originalFilename}`;
+    res.status(200).json({ url });
   });
 }
