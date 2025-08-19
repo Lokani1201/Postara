@@ -1,59 +1,53 @@
-import fetch from "node-fetch";
-import formidable from "formidable-serverless";
+// File: api/generate-caption.js
+import fetch from 'node-fetch';
+import formidable from 'formidable';
 
 export const config = {
   api: {
-    bodyParser: false,
-  },
+    bodyParser: false
+  }
 };
 
-const AYRSHARE_API_KEY = process.env.AYRSHARE_API_KEY; // your API key from Vercel environment
-
 export default async function handler(req, res) {
-  if (req.method !== "POST") {
-    return res.status(405).json({ error: "Method not allowed" });
+  if (req.method !== 'POST') {
+    return res.status(405).json({ error: 'Method not allowed' });
   }
 
-  try {
-    const form = new formidable.IncomingForm();
-    form.parse(req, async (err, fields, files) => {
-      if (err) {
-        console.error(err);
-        return res.status(500).json({ error: "Error parsing file" });
-      }
+  const form = new formidable.IncomingForm();
 
-      const file = files.file;
-      if (!file) {
-        return res.status(400).json({ error: "No file uploaded" });
-      }
+  form.parse(req, async (err, fields, files) => {
+    if (err) {
+      console.error(err);
+      return res.status(500).json({ error: 'Error parsing file' });
+    }
 
-      // Convert file to base64 for API
-      const fs = require("fs");
-      const fileData = fs.readFileSync(file.filepath);
-      const base64File = fileData.toString("base64");
+    const file = files.file;
+    if (!file) return res.status(400).json({ error: 'No file uploaded' });
 
-      // Call Ayrshare AI caption API
-      const response = await fetch("https://app.ayrshare.com/api/caption", {
-        method: "POST",
+    try {
+      // Send file to Ayrshare AI Caption endpoint
+      const apiKey = process.env.AYRSHARE_API_KEY; // your API key in Vercel Environment
+      const formData = new FormData();
+      formData.append('file', fs.createReadStream(file.filepath));
+
+      const response = await fetch('https://app.ayrshare.com/api/social/caption', {
+        method: 'POST',
         headers: {
-          "Content-Type": "application/json",
-          "Authorization": `Bearer ${AYRSHARE_API_KEY}`,
+          'Authorization': `Bearer ${apiKey}`
         },
-        body: JSON.stringify({
-          file: base64File,
-          count: 5
-        }),
+        body: formData
       });
 
       const data = await response.json();
-      if (data.captions) {
-        return res.status(200).json({ captions: data.captions });
+
+      if (data && data.caption) {
+        return res.status(200).json({ caption: data.caption });
       } else {
-        return res.status(500).json({ error: "No captions returned from API" });
+        return res.status(500).json({ error: 'AI could not generate caption' });
       }
-    });
-  } catch (error) {
-    console.error(error);
-    return res.status(500).json({ error: "Server error" });
-  }
+    } catch (error) {
+      console.error(error);
+      return res.status(500).json({ error: 'Server error' });
+    }
+  });
 }
