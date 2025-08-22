@@ -4,6 +4,7 @@ export async function POST(req: Request) {
   try {
     const { caption, mediaUrl, isVideo } = await req.json();
 
+    // This gets your secret key from Vercel Settings → Environment Variables
     const key = process.env.AYRSHARE_KEY;
     if (!key) {
       return new Response(JSON.stringify({ message: 'AYRSHARE_KEY missing on server.' }), { status: 500 });
