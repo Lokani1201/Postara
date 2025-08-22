@@ -11,7 +11,7 @@ export async function POST(req: Request) {
     const filename = `uploads/${Date.now()}-${f.name.replace(/[^a-zA-Z0-9._-]/g,'_')}`;
     const blob = await put(filename, f, { access: 'public' });
     return Response.json({ url: blob.url });
-  } catch (err:any) {
+  } catch (err: any) {
     return new Response(JSON.stringify({ message: err?.message || 'Upload error' }), { status: 500 });
   }
 }
