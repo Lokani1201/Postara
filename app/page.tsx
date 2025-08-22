@@ -6,7 +6,7 @@ export default function Home() {
   const [caption, setCaption] = useState('');
   const [fileUrl, setFileUrl] = useState<string | null>(null);
 
-  // --- Inline SVG icons (no image files needed) ---
+  // Inline SVG icons (no images needed)
   const Icon = {
     instagram: (
       <svg width="28" height="28" viewBox="0 0 24 24" aria-label="Instagram">
@@ -104,39 +104,34 @@ export default function Home() {
         <p style={{ color:'#6b7280', marginTop:6 }}>Upload → Generate caption → Post to all → Download file</p>
       </header>
 
-      {/* Logos row */}
       <div style={{ display:'flex', gap:18, justifyContent:'center', alignItems:'center', padding:'12px 0', border:'1px solid #e5e7eb', borderRadius:10, marginBottom:16 }}>
         {Icon.instagram}{Icon.facebook}{Icon.twitter}{Icon.tiktok}{Icon.youtube}{Icon.linkedin}
       </div>
 
-      {/* Controls */}
       <div style={{ display:'grid', gap:12 }}>
         <input id="file" type="file" accept="image/*,video/*" style={{ padding:10, border:'1px solid #e5e7eb', borderRadius:8 }}/>
-        <div style={{ display:'grid', gap:8 }}>
-          <textarea
-            placeholder="Write a caption or click Generate Caption…"
-            value={caption}
-            onChange={e=>setCaption(e.target.value)}
-            rows={4}
-            style={{ padding:10, border:'1px solid #e5e7eb', borderRadius:8 }}
-          />
-          <div style={{ display:'flex', gap:10, flexWrap:'wrap' }}>
-            <button onClick={handleGenerateCaption} style={{ padding:'10px 16px', fontWeight:600, background:'#10b981', color:'#fff', borderRadius:8, border:'none', cursor:'pointer' }}>
-              Generate Caption
-            </button>
-            <button onClick={handleUploadAndPost} style={{ padding:'10px 16px', fontWeight:600, background:'#4f46e5', color:'#fff', borderRadius:8, border:'none', cursor:'pointer' }}>
-              Upload & Post
-            </button>
-            {fileUrl && (
-              <a href={fileUrl} download style={{ padding:'10px 16px', fontWeight:600, background:'#f59e0b', color:'#fff', borderRadius:8, textDecoration:'none' }}>
-                Download File
-              </a>
-            )}
-          </div>
+        <textarea
+          placeholder="Write a caption or click Generate Caption…"
+          value={caption}
+          onChange={e=>setCaption(e.target.value)}
+          rows={4}
+          style={{ padding:10, border:'1px solid #e5e7eb', borderRadius:8 }}
+        />
+        <div style={{ display:'flex', gap:10, flexWrap:'wrap' }}>
+          <button onClick={handleGenerateCaption} style={{ padding:'10px 16px', fontWeight:600, background:'#10b981', color:'#fff', borderRadius:8, border:'none', cursor:'pointer' }}>
+            Generate Caption
+          </button>
+          <button onClick={handleUploadAndPost} style={{ padding:'10px 16px', fontWeight:600, background:'#4f46e5', color:'#fff', borderRadius:8, border:'none', cursor:'pointer' }}>
+            Upload & Post
+          </button>
+          {fileUrl && (
+            <a href={fileUrl} download style={{ padding:'10px 16px', fontWeight:600, background:'#f59e0b', color:'#fff', borderRadius:8, textDecoration:'none' }}>
+              Download File
+            </a>
+          )}
         </div>
       </div>
 
-      {/* Status */}
       <div style={{ marginTop:16, color:'#111827' }}>
         <b>Status:</b> {status}
       </div>
