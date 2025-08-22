@@ -1,33 +1,36 @@
-export const runtime = 'edge';
+import { NextResponse } from "next/server";
 
 export async function POST(req: Request) {
   try {
-    const { caption, mediaUrl, isVideo } = await req.json();
+    const { fileUrl, caption } = await req.json();
 
-    const key = process.env.AYRSHARE_KEY;
-    if (!key) {
-      return new Response(JSON.stringify({ message: 'AYRSHARE_KEY missing on server.' }), { status: 500 });
+    if (!fileUrl || !caption) {
+      return NextResponse.json({ error: "Missing file or caption" }, { status: 400 });
     }
 
-    const body:any = {
-      post: caption || '',
-      platforms: ['all'],
-      mediaUrls: mediaUrl ? [mediaUrl] : []
-    };
-    if (isVideo) body.isVideo = true;
-
-    const res = await fetch('https://api.ayrshare.com/api/post', {
-      method: 'POST',
+    // Here you connect to Ayrshare API with *your API key*
+    const response = await fetch("https://app.ayrshare.com/api/post", {
+      method: "POST",
       headers: {
-        'Content-Type': 'application/json',
-        'Authorization': `Bearer ${key}`
+        "Content-Type": "application/json",
+        "Authorization": "Bearer AF1849F0-6FE746B2-8091E370-379C4E9A", // Your key
       },
-      body: JSON.stringify(body)
+      body: JSON.stringify({
+        post: caption,
+        mediaUrls: [fileUrl],
+        platforms: ["twitter", "facebook", "linkedin", "instagram", "tiktok"], // All supported
+      }),
     });
 
-    const data = await res.json();
-    return new Response(JSON.stringify(data), { status: res.status });
-  } catch (err:any) {
-    return new Response(JSON.stringify({ message: err?.message || 'Post error' }), { status: 500 });
+    const data = await response.json();
+
+    if (!response.ok) {
+      return NextResponse.json({ error: data.error || "Failed to post" }, { status: 500 });
+    }
+
+    return NextResponse.json({ success: true, data });
+  } catch (err) {
+    console.error(err);
+    return NextResponse.json({ error: "Server error" }, { status: 500 });
   }
 }
