@@ -8,7 +8,7 @@
     "start": "next start"
   },
   "dependencies": {
-    "@vercel/blob": "0.23.5",
+    "@vercel/blob": "latest",
     "next": "14.2.5",
     "react": "18.2.0",
     "react-dom": "18.2.0"
